@@ -1,0 +1,26 @@
+REPORT ZSELECAO_MATERIAL.
+
+* Declaração das tabelas de seleção
+TABLES: MARA, MAKT, T134T.
+
+* Declaração das variáveis para seleção
+SELECT-OPTIONS: s_matnr FOR MARA-MATNR,       " Numero do Material
+                s_mtart FOR MARA-MTART.      " Tipo do Material
+
+START-OF-SELECTION.
+
+  SELECT A~MATNR A~MTART B~MAKTX C~MTBEZ
+    INTO TABLE @DATA(result)
+    FROM MARA AS A
+    INNER JOIN MAKT AS B ON A~MATNR = B~MATNR
+    INNER JOIN T134T AS C ON A~MTART = C~MTART
+    WHERE A~MATNR IN @s_matnr
+    AND A~MTART IN @s_mtart
+    AND B~SPRAS = SY-LANGU.
+
+  LOOP AT result INTO DATA(line).
+    WRITE: / line-MATNR, 'NUMERO DO MATERIAL TABELA MARA',
+           line-MTART, 'TIPO DO MATERIAL TABELA MARA',
+           line-MAKTX, 'TEXTO DO MATERIAL TABELA MAKT',
+           line-MTBEZ, 'TEXTO DO TIPO DO MATERIAL TABELA T134T'.
+  ENDLOOP.
