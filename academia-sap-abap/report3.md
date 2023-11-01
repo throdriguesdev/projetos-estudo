@@ -1,0 +1,313 @@
+# Código ABAP para Criação de Pedido de Vendas
+
+## Visão Geral
+
+Este é um código ABAP que cria um Pedido de Vendas em um sistema SAP. Para explicar de maneira simples:
+
+- Ele permite que você insira informações como o tipo de documento, organização de vendas, canal de distribuição e outros detalhes relacionados a uma venda.
+- Em seguida, ele usa essas informações para criar um Pedido de Vendas no sistema SAP.
+
+## Por que isso é importante?
+
+Para um desenvolvedor iniciante, entender esse código é fundamental porque:
+
+- Demonstra como os sistemas empresariais funcionam.
+- Mostra como os códigos podem interagir com sistemas complexos, como o SAP.
+- Oferece um exemplo prático de como a entrada de dados pode ser automatizada.
+
+## Como usar?
+
+Para usar este código:
+
+1. Preencha os parâmetros fornecidos, como o tipo de documento e os detalhes da venda.
+2. Execute o código, que preparará esses dados para serem inseridos no sistema SAP.
+3. A BAPI (uma função interna do SAP) é chamada para criar o Pedido de Vendas com base nos dados fornecidos.
+
+####CÓDIGO 
+
+REPORT ZABAP22R_CONSULTA1
+
+*&---------------------------------------------------------------------*
+*& Report ZABAP22R_EXEC12
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+REPORT ZABAP22R_EXEC12.
+
+
+
+PARAMETERS: p_auart TYPE auart OBLIGATORY.
+PARAMETERS: p_vkorg TYPE vkorg OBLIGATORY.
+PARAMETERS: p_vtweg TYPE vtweg OBLIGATORY.
+PARAMETERS: p_spart TYPE vtweg OBLIGATORY.
+
+PARAMETERS: p_sold TYPE kunnr OBLIGATORY.
+PARAMETERS: p_ship TYPE kunnr OBLIGATORY.
+
+*ITEM
+PARAMETERS: p_matnr TYPE matnr OBLIGATORY.
+PARAMETERS: p_menge TYPE kwmeng OBLIGATORY.
+PARAMETERS: p_plant TYPE werks_d OBLIGATORY.
+PARAMETERS: p_itcat TYPE pstyv   OBLIGATORY.
+
+* DATA DECLARATIONS.
+DATA: v_vbeln LIKE vbak-vbeln.
+DATA: header LIKE bapisdhead1.
+DATA: headerx LIKE bapisdhead1x.
+DATA: item    LIKE bapisditem OCCURS 0 WITH HEADER LINE.
+DATA: itemx   LIKE bapisditemx OCCURS 0 WITH HEADER LINE.
+DATA: partner LIKE bapipartnr  OCCURS 0 WITH HEADER LINE.
+DATA: return  LIKE bapiret2    OCCURS 0 WITH HEADER LINE.
+DATA: lt_schedules_inx   TYPE STANDARD TABLE OF bapischdlx
+                         WITH HEADER LINE.
+DATA: lt_schedules_in    TYPE STANDARD TABLE OF bapischdl
+                         WITH HEADER LINE.
+
+* HEADER DATA
+header-doc_type = p_auart.
+headerx-doc_type = 'X'.
+
+header-sales_org = p_vkorg.
+headerx-sales_org = 'X'.
+
+header-distr_chan  = p_vtweg.
+headerx-distr_chan = 'X'.
+
+header-division = p_spart.
+headerx-division = 'X'.
+
+headerx-updateflag = 'I'.
+
+* PARTNER DATA
+partner-partn_role = 'AG'.
+partner-partn_numb = p_sold.
+APPEND partner.
+
+partner-partn_role = 'WE'.
+partner-partn_numb = p_ship.
+APPEND partner.
+
+* ITEM DATA
+itemx-updateflag = 'I'.
+
+item-itm_number = '000010'.
+itemx-itm_number = 'X'.
+
+
+item-material = p_matnr.
+itemx-material = 'X'.
+
+item-plant    = p_plant.
+itemx-plant   = 'X'.
+
+item-target_qty = p_menge.
+itemx-target_qty = 'X'.
+
+item-target_qu = 'EA'.
+itemx-target_qu = 'X'.
+
+item-item_categ = p_itcat.
+itemx-item_categ = 'X'.
+
+APPEND item.
+APPEND itemx.
+
+*   Fill schedule lines
+lt_schedules_in-itm_number = '000010'.
+lt_schedules_in-sched_line = '0001'.
+lt_schedules_in-req_qty    = p_menge.
+APPEND lt_schedules_in.
+
+*   Fill schedule line flags
+lt_schedules_inx-itm_number  = '000010'.
+lt_schedules_inx-sched_line  = '0001'.
+lt_schedules_inx-updateflag  = 'X'.
+lt_schedules_inx-req_qty     = 'X'.
+APPEND lt_schedules_inx.
+
+* Call the BAPI
+CALL FUNCTION 'BAPI_SALESDOCU_CREATEFROMDATA1'
+     EXPORTING
+          sales_header_in     = header
+          sales_header_inx    = headerx
+     IMPORTING
+          salesdocument_ex    = v_vbeln
+     TABLES
+          return              = return
+          sales_items_in      = item
+          sales_items_inx     = itemx
+          sales_schedules_in  = lt_schedules_in
+          sales_schedules_inx = lt_schedules_inx
+          sales_partners      = partner.
+
+* Check the return table.
+READ TABLE  return TRANSPORTING NO FIELDS WITH KEY type = 'S'.
+IF sy-subrc = 0.
+
+    COMMIT WORK AND WAIT.
+
+  WRITE: / 'Document ', v_vbeln, ' created'.
+
+
+
+ELSE.
+
+  WRITE: / 'Error in creating document'.
+
+ENDIF.
+
+
+######################
+
+PARAMETERS: p_auart TYPE auart OBLIGATORY.
+PARAMETERS: p_vkorg TYPE vkorg OBLIGATORY.
+PARAMETERS: p_vtweg TYPE vtweg OBLIGATORY.
+PARAMETERS: p_spart TYPE vtweg OBLIGATORY.
+
+PARAMETERS: p_sold TYPE kunnr OBLIGATORY.
+PARAMETERS: p_ship TYPE kunnr OBLIGATORY.
+
+*ITEM
+PARAMETERS: p_matnr TYPE matnr OBLIGATORY.
+PARAMETERS: p_matnr2 TYPE matnr OBLIGATORY.
+PARAMETERS: p_menge TYPE kwmeng OBLIGATORY.
+PARAMETERS: p_menge2 TYPE kwmeng OBLIGATORY.
+PARAMETERS: p_plant TYPE werks_d OBLIGATORY.
+PARAMETERS: p_plant2 TYPE werks_d OBLIGATORY.
+PARAMETERS: p_itcat TYPE pstyv   OBLIGATORY.
+PARAMETERS: p_itcat2 TYPE pstyv   OBLIGATORY.
+
+* DATA DECLARATIONS.
+DATA: v_vbeln LIKE vbak-vbeln.
+DATA: header LIKE bapisdhead1.
+DATA: headerx LIKE bapisdhead1x.
+DATA: item    LIKE bapisditem OCCURS 0 WITH HEADER LINE.
+DATA: itemx   LIKE bapisditemx OCCURS 0 WITH HEADER LINE.
+DATA: item2    LIKE bapisditem OCCURS 0 WITH HEADER LINE.
+DATA: itemx2   LIKE bapisditemx OCCURS 0 WITH HEADER LINE.
+DATA: partner LIKE bapipartnr  OCCURS 0 WITH HEADER LINE.
+DATA: return  LIKE bapiret2    OCCURS 0 WITH HEADER LINE.
+DATA: lt_schedules_inx   TYPE STANDARD TABLE OF bapischdlx
+                         WITH HEADER LINE.
+DATA: lt_schedules_in    TYPE STANDARD TABLE OF bapischdl
+                         WITH HEADER LINE.
+DATA: lt_schedules_inx2   TYPE STANDARD TABLE OF bapischdlx
+                         WITH HEADER LINE.
+DATA: lt_schedules_in2    TYPE STANDARD TABLE OF bapischdl
+                         WITH HEADER LINE.
+
+* HEADER DATA
+header-doc_type = p_auart.
+headerx-doc_type = 'X'.
+
+header-sales_org = p_vkorg.
+headerx-sales_org = 'X'.
+
+header-distr_chan  = p_vtweg.
+headerx-distr_chan = 'X'.
+
+header-division = p_spart.
+headerx-division = 'X'.
+
+headerx-updateflag = 'I'.
+
+* PARTNER DATA
+partner-partn_role = 'AG'.
+partner-partn_numb = p_sold.
+APPEND partner.
+
+partner-partn_role = 'WE'.
+partner-partn_numb = p_ship.
+APPEND partner.
+
+* ITEM DATA
+itemx-updateflag = 'I'.
+item-itm_number = '000010'.
+itemx-itm_number = 'X'.
+item-material = p_matnr.
+itemx-material = 'X'.
+item-plant    = p_plant.
+itemx-plant   = 'X'.
+item-target_qty = p_menge.
+itemx-target_qty = 'X'.
+item-target_qu = 'EA'.
+itemx-target_qu = 'X'.
+item-item_categ = p_itcat.
+itemx-item_categ = 'X'.
+APPEND item.
+APPEND itemx.
+
+* ITEM2 DATA
+itemx2-updateflag = 'I'.
+item2-itm_number = '000020'.
+itemx2-itm_number = 'X'.
+item2-material = p_matnr2.
+itemx2-material = 'X'.
+item2-plant    = p_plant2.
+itemx2-plant   = 'X'.
+item2-target_qty = p_menge2.
+itemx2-target_qty = 'X'.
+item2-target_qu = 'EA'.
+itemx2-target_qu = 'X'.
+item2-item_categ = p_itcat2.
+itemx2-item_categ = 'X'.
+APPEND item2.
+APPEND itemx2.
+
+* Fill schedule lines
+lt_schedules_in-itm_number = '000010'.
+lt_schedules_in-sched_line = '0001'.
+lt_schedules_in-req_qty    = p_menge.
+APPEND lt_schedules_in.
+
+lt_schedules_in-itm_number = '000020'.
+lt_schedules_in-sched_line = '0001'.
+lt_schedules_in-req_qty    = p_menge2.
+APPEND lt_schedules_in.
+
+* Fill schedule line flags
+lt_schedules_inx-itm_number  = '000010'.
+lt_schedules_inx-sched_line  = '0001'.
+lt_schedules_inx-updateflag  = 'X'.
+lt_schedules_inx-req_qty     = 'X'.
+APPEND lt_schedules_inx.
+
+lt_schedules_inx-itm_number  = '000020'.
+lt_schedules_inx-sched_line  = '0001'.
+lt_schedules_inx-updateflag  = 'X'.
+lt_schedules_inx-req_qty     = 'X'.
+APPEND lt_schedules_inx.
+
+* Call the BAPI
+CALL FUNCTION 'BAPI_SALESDOCU_CREATEFROMDATA1'
+     EXPORTING
+          sales_header_in     = header
+          sales_header_inx    = headerx
+     IMPORTING
+          salesdocument_ex    = v_vbeln
+     TABLES
+          return              = return
+          sales_items_in      = item
+          sales_items_inx     = itemx
+          sales_items_in2     = item2
+          sales_items_inx2    = itemx2
+          sales_schedules_in  = lt_schedules_in
+          sales_schedules_inx = lt_schedules_inx
+          sales_schedules_in2 = lt_schedules_in2
+          sales_schedules_inx2 = lt_schedules_inx2
+          sales_partners      = partner.
+
+* Check the return table.
+READ TABLE  return TRANSPORTING NO FIELDS WITH KEY type = 'S'.
+IF sy-subrc = 0.
+
+    COMMIT WORK AND WAIT.
+
+  WRITE: / 'Document ', v_vbeln, ' created'.
+
+ELSE.
+
+  WRITE: / 'Error in creating document'.
+
+ENDIF.
+

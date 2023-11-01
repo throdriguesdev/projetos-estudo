@@ -21,7 +21,7 @@ Os parâmetros fornecidos pelo usuário são usados para preencher as estruturas
 O código também preenche tabelas relacionadas à programação de entrega, indicando quantidades e datas planejadas para entrega.
 
 #### CÓDIGO
-
+REPORT ZABAP22R_CONSULTA1
 PARAMETERS: p_auart TYPE auart OBLIGATORY.
 PARAMETERS: p_vkorg TYPE vkorg OBLIGATORY.
 PARAMETERS: p_vtweg TYPE vtweg OBLIGATORY.
